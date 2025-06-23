@@ -1,0 +1,44 @@
+{
+	"name": "deeplmn",
+	"description": "Translate content using DeepL Machine Translation when saving a translation field in any item.",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-bundle"
+	],
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "bundle",
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"entries": [
+			{
+				"type": "hook",
+				"name": "deeplmn-hooks",
+				"source": "src/deeplmn-hooks/index.js"
+			}
+		],
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"validate": "directus-extension validate",
+		"add-extension": "directus-extension add"
+	},
+	"devDependencies": {
+		"@directus/extensions-sdk": "13.1.1"
+	},
+	"dependencies": {
+		"@sindresorhus/slugify": "^2.2.1",
+		"deepl-node": "^1.18.0"
+	}
+}
