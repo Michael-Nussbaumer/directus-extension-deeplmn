@@ -20,7 +20,7 @@ This extension can be installed via the Directus Marketplace.
 **Alternatively, install via npm:**
 
 ```bash
-npm install directus-extension-deeplmn
+npm install deeplmn
 ```
 
 Then copy the extension files to your Directus extensions directory.
