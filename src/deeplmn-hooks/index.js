@@ -30,6 +30,11 @@ export default ({ filter, action }, { services, database, getSchema, logger }) =
             for (const field of translationFields) {
                 const currentTranslation = currentItem[field]?.find((t) => t?.languages_code === sourceLanguage.code) || null;
                 if (currentTranslation) {
+                    Object.keys(currentTranslation).forEach((k) => {
+                        if (!allTranslatableFields?.[field]?.includes(k)) {
+                            delete currentTranslation[k];
+                        }
+                    });
                     translationPayload[field] = currentTranslation;
                 }
             }
