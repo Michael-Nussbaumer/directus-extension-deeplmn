@@ -2,7 +2,7 @@
 	"name": "deeplmn",
 	"description": "Translate content using DeepL Machine Translation when saving a translation field in any item.",
 	"icon": "extension",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"license": "MIT",
 	"keywords": [
 		"directus",
@@ -26,7 +26,7 @@
 				"source": "src/deeplmn-hooks/index.js"
 			}
 		],
-		"host": "^10.10.0"
+		"host": ">=10.10.0"
 	},
 	"scripts": {
 		"build": "directus-extension build",
