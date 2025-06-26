@@ -13,87 +13,90 @@ export default ({ filter, action }, { services, database, getSchema, logger }) =
 
         const { translationFields, allTranslatableFields, translationPayload, sourceTranslationChanged } = hasTranslationFieldChanged({ schema, collection, payload, sourceLanguage, mode });
 
-        const key = keys?.[0] || payload?.id;
+        const itemKeys = keys || payload?.id;
 
-        if (!sourceTranslationChanged || !doTranslation || !key) {
+        if (!sourceTranslationChanged || !doTranslation || !itemKeys) {
             return payload;
         }
 
         const itemsService = getService({ ItemsService, schema, collection });
 
-        const currentItem = await itemsService.readOne(key, {
-            fields: ["id", ...translationFields.map((f) => `${f}.*`)],
-        });
+        for (const key of itemKeys) {
+            if (!key) continue;
 
-        if (mode === "default") {
-            // In default mode, we always translate fields that are not present in the current item
-            for (const field of translationFields) {
-                const currentTranslation = currentItem[field]?.find((t) => t?.languages_code === sourceLanguage.code) || null;
-                if (currentTranslation) {
-                    Object.keys(currentTranslation).forEach((k) => {
-                        if (!allTranslatableFields?.[field]?.includes(k)) {
-                            delete currentTranslation[k];
-                        }
-                    });
-                    translationPayload[field] = currentTranslation;
-                }
-            }
-        }
+            const currentItem = await itemsService.readOne(key, {
+                fields: ["id", ...translationFields.map((f) => `${f}.*`)],
+            });
 
-        const updatePayload = {};
-        try {
-            for (const field of Object.keys(translationPayload)) {
-                const existingSourceTranslation = JSON.parse(JSON.stringify(currentItem))?.[field]?.find((t) => t?.languages_code === sourceLanguage.code) || null;
-                updatePayload[field] = {
-                    create: [],
-                    update: [],
-                };
-
-                for (const lang of autoTranslateLanguages) {
-                    let translatedPayload = {};
-
-                    const existingTranslation = JSON.parse(JSON.stringify(currentItem))?.[field]?.find((t) => t?.languages_code === lang.code) || null;
-
-                    if (existingSourceTranslation) {
-                        // Filter out fields that are not in the translationFields
-                        Object.keys(existingSourceTranslation).forEach((k) => {
+            if (mode === "default") {
+                // In default mode, we always translate fields that are not present in the current item
+                for (const field of translationFields) {
+                    const currentTranslation = currentItem[field]?.find((t) => t?.languages_code === sourceLanguage.code) || null;
+                    if (currentTranslation) {
+                        Object.keys(currentTranslation).forEach((k) => {
                             if (!allTranslatableFields?.[field]?.includes(k)) {
-                                delete existingSourceTranslation[k];
-                            } else if (!existingTranslation?.[k]) {
-                                translationPayload[field][k] = existingSourceTranslation[k];
+                                delete currentTranslation[k];
                             }
                         });
-                    }
-
-                    for (const f of Object.keys(translationPayload[field])) {
-                        if (!existingTranslation?.[f]) {
-                            const text = translationPayload[field][f];
-                            if (!text) continue;
-
-                            translatedPayload[f] = await deeplTranslate(text, sourceLanguage.deeplmn_language, lang.deeplmn_language);
-                        }
-                    }
-
-                    // to process the fields (trim, slugify, etc.)
-                    translatedPayload = await processFields({ schema, collection, field, payload: translatedPayload, FieldsService });
-
-                    if (existingTranslation) {
-                        updatePayload[field].update.push({
-                            ...existingTranslation,
-                            ...translatedPayload,
-                        });
-                    } else {
-                        updatePayload[field].create.push({
-                            languages_code: lang.code,
-                            ...translatedPayload,
-                        });
+                        translationPayload[field] = currentTranslation;
                     }
                 }
             }
 
-            await itemsService.updateOne(key, updatePayload, { emitEvents: false });
-        } catch (error) {
-            console.error("Error during translation:", error);
+            const updatePayload = {};
+            try {
+                for (const field of Object.keys(translationPayload)) {
+                    const existingSourceTranslation = JSON.parse(JSON.stringify(currentItem))?.[field]?.find((t) => t?.languages_code === sourceLanguage.code) || null;
+                    updatePayload[field] = {
+                        create: [],
+                        update: [],
+                    };
+
+                    for (const lang of autoTranslateLanguages) {
+                        let translatedPayload = {};
+
+                        const existingTranslation = JSON.parse(JSON.stringify(currentItem))?.[field]?.find((t) => t?.languages_code === lang.code) || null;
+
+                        if (existingSourceTranslation) {
+                            // Filter out fields that are not in the translationFields
+                            Object.keys(existingSourceTranslation).forEach((k) => {
+                                if (!allTranslatableFields?.[field]?.includes(k)) {
+                                    delete existingSourceTranslation[k];
+                                } else if (!existingTranslation?.[k]) {
+                                    translationPayload[field][k] = existingSourceTranslation[k];
+                                }
+                            });
+                        }
+
+                        for (const f of Object.keys(translationPayload[field])) {
+                            if (!existingTranslation?.[f]) {
+                                const text = translationPayload[field][f];
+                                if (!text) continue;
+
+                                translatedPayload[f] = await deeplTranslate(text, sourceLanguage.deeplmn_language, lang.deeplmn_language);
+                            }
+                        }
+
+                        // to process the fields (trim, slugify, etc.)
+                        translatedPayload = await processFields({ schema, collection, field, payload: translatedPayload, FieldsService });
+
+                        if (existingTranslation) {
+                            updatePayload[field].update.push({
+                                ...existingTranslation,
+                                ...translatedPayload,
+                            });
+                        } else {
+                            updatePayload[field].create.push({
+                                languages_code: lang.code,
+                                ...translatedPayload,
+                            });
+                        }
+                    }
+                }
+                await itemsService.updateOne(key, updatePayload, { emitEvents: false });
+            } catch (error) {
+                console.error("Error during translation:", error);
+            }
         }
 
         return payload;
