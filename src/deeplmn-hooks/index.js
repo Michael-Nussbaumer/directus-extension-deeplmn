@@ -24,6 +24,7 @@ export default ({ filter, action }, { services, database, getSchema, logger }) =
         for (const key of itemKeys) {
             if (!key) continue;
 
+            const currentTranslationPayload = { ...translationPayload };
             const currentItem = await itemsService.readOne(key, {
                 fields: ["id", ...translationFields.map((f) => `${f}.*`)],
             });
@@ -38,14 +39,14 @@ export default ({ filter, action }, { services, database, getSchema, logger }) =
                                 delete currentTranslation[k];
                             }
                         });
-                        translationPayload[field] = currentTranslation;
+                        currentTranslationPayload[field] = currentTranslation;
                     }
                 }
             }
 
             const updatePayload = {};
             try {
-                for (const field of Object.keys(translationPayload)) {
+                for (const field of Object.keys(currentTranslationPayload)) {
                     const existingSourceTranslation = JSON.parse(JSON.stringify(currentItem))?.[field]?.find((t) => t?.languages_code === sourceLanguage.code) || null;
                     updatePayload[field] = {
                         create: [],
@@ -63,14 +64,14 @@ export default ({ filter, action }, { services, database, getSchema, logger }) =
                                 if (!allTranslatableFields?.[field]?.includes(k)) {
                                     delete existingSourceTranslation[k];
                                 } else if (!existingTranslation?.[k]) {
-                                    translationPayload[field][k] = existingSourceTranslation[k];
+                                    currentTranslationPayload[field][k] = existingSourceTranslation[k];
                                 }
                             });
                         }
 
-                        for (const f of Object.keys(translationPayload[field])) {
+                        for (const f of Object.keys(currentTranslationPayload[field])) {
                             if (!existingTranslation?.[f]) {
-                                const text = translationPayload[field][f];
+                                const text = currentTranslationPayload[field][f];
                                 if (!text) continue;
 
                                 translatedPayload[f] = await deeplTranslate(text, sourceLanguage.deeplmn_language, lang.deeplmn_language);
@@ -93,6 +94,7 @@ export default ({ filter, action }, { services, database, getSchema, logger }) =
                         }
                     }
                 }
+
                 await itemsService.updateOne(key, updatePayload, { emitEvents: false });
             } catch (error) {
                 console.error("Error during translation:", error);
