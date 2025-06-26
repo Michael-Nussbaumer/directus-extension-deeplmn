@@ -99,12 +99,14 @@ export default ({ filter, action }, { services, database, getSchema, logger }) =
         return payload;
     };
 
-    action("items.create", async ({ event, payload, keys, collection }, { database, schema, accountability }) => {
-        return await handleChanges({ event, payload, keys, collection, database, schema, accountability });
+    action("items.create", async ({ event, payload, key, keys, collection }, { database, schema, accountability }) => {
+        const itemKeys = keys || [key];
+        return await handleChanges({ event, payload, keys: itemKeys, collection, database, schema, accountability });
     });
 
-    action("items.update", async ({ event, payload, keys, collection }, { database, schema, accountability }) => {
-        return await handleChanges({ event, payload, keys, collection, database, schema, accountability });
+    action("items.update", async ({ event, payload, key, keys, collection }, { database, schema, accountability }) => {
+        const itemKeys = keys || [key];
+        return await handleChanges({ event, payload, keys: itemKeys, collection, database, schema, accountability });
     });
 
     action("server.start", async (meta, context) => {
