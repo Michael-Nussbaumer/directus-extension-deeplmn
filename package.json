@@ -2,7 +2,7 @@
 	"name": "deeplmn",
 	"description": "Translate content using DeepL Machine Translation when saving a translation field in any item.",
 	"icon": "extension",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"license": "MIT",
 	"keywords": [
 		"directus",
