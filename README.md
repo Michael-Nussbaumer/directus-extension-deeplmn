@@ -91,7 +91,7 @@ MIT
 
 ## Support
 
-For issues and feature requests, please use the [GitHub Issues](https://github.com/MichaelNussbaumerGOWEST/directus-extension-deeplmn/issues) page.
+For issues and feature requests, please use the [GitHub Issues](https://github.com/Michael-Nussbaumer/directus-extension-deeplmn/issues) page.
 
 ---
 
